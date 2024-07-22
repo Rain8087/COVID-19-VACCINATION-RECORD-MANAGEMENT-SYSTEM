@@ -1,0 +1,534 @@
+DEFINE Pmain_menu()
+	DOWHILE (True)
+		DISPLAY ("1 - New patient registration")
+		DISPLAY ("2 - Patient login")
+		DISPLAY ("3 - Staff login")
+		DISPLAY ("4 - Exit")
+		DISPLAY ("Enter your choice: ")
+		READ choice
+		IF choice == 1 THEN
+			CALL: new_patient_reg
+		ELIF choice == 2 THEN
+			CALL: patient_login
+		ELIF choice == 3 THEN
+			CALL: staff_login
+		ELIF choice == 4 THEN
+			EXIT ()
+		ELSE
+			DISPLAY ("Invalid option")
+		ENDIF
+	ENDDO
+ENDDEFINE
+
+DEFINE Smenu()
+	DOWHILE (True)
+		DISPLAY ("1 - Vaccine Administration")
+		DISPLAY ("2 - Search Patient Record and Vaccination Status")
+		DISPLAY ("3 - Statistical Information on Patients Vaccinated")
+		DISPLAY ("4 - Exit")
+		DISPLAY ("Enter your choice: ")
+		READ choice
+		IF choice == 1 THEN
+			CALL: vc_admin
+		ELIF choice == 2 THEN
+			CALL: vc_admin
+		ELIF choice == 3 THEN
+			CALL: vc_statusview
+		ELIF choice == 4 THEN
+			EXIT (Pmain_menu)
+		ENDIF
+	ENDDO
+ENDDEFINE
+
+DEFINE new_patient_reg()
+	fh = OPEN("patient.txt", "a")
+	DEFINE rec, rec2, flg
+	DOWHILE (True)
+		DISPLAY ("Enter new patient name: ")
+		READ name
+		IF LENGTH(name) == 0 THEN
+			DISPLAY ("Please input valid name.")
+		ELSE
+			BREAK
+		ENDIF
+	ENDDO
+	DOWHILE (True)
+		DISPLAY ("Enter new patient age: ")
+		TRY 
+			READ int(age)
+		EXCEPT 
+			DISPLAY ("Invalid input")
+	ENDDO
+	IF age<12 THEN
+		DISPLAY("Sorry, no vaccine available for this age")
+		EXIT (Pmain_menu())
+	ELIF age>=18 AND age<=45 THEN
+		flg = 1
+	ELIF age>=12 AND age<=45 THEN
+		flg = 2
+	ELIF age>=45 THEN
+		flg = 3
+	ENDIF
+	IF flg == 1 THEN
+		DISPLAY ("Vaccine available: ")
+		DISPLAY ("="*65)
+		DISPLAY ("Vaccine Code".center(14)+"|"+"Dosage Required".center(24)+"|"+"Interval Between Doses".center(24))
+		DISPLAY ("="*65)
+		DISPLAY ("AF".ljust(14)+"|"+"2".center(24)+"|"+"2 weeks (14 days)".center(24))
+		DISPLAY ("BV".ljust(14)+"|"+"2".center(24)+"|"+"3 weeks (21 days)".center(24))
+		DISPLAY ("CZ".ljust(14)+"|"+"2".center(24)+"|"+"3 weeks (21 days)".center(24))
+		DISPLAY ("DM".ljust(14)+"|"+"2".center(24)+"|"+"4 weeks (28 days)".center(24))
+		DISPLAY ("EC".ljust(14)+"|"+"1".center(24)+"|"+"-".center(24))
+		DISPLAY ("="*65)
+	ELIF flg == 2 THEN
+		DISPLAY ("Vaccine available: ")
+		DISPLAY ("="*65)
+		DISPLAY ("Vaccine Code".center(14)+"|"+"Dosage Required".center(24)+"|"+"Interval Between Doses".center(24))
+		DISPLAY ("="*65)
+		DISPLAY ("AF".ljust(14)+"|"+"2".center(24)+"|"+"2 weeks (14 days)".center(24))
+		DISPLAY ("CZ".ljust(14)+"|"+"2".center(24)+"|"+"3 weeks (21 days)".center(24))
+		DISPLAY ("DM".ljust(14)+"|"+"2".center(24)+"|"+"4 weeks (28 days)".center(24))
+		DISPLAY ("="*65)
+	ELIF flg == 3 THEN
+		DISPLAY ("Vaccine available: ")
+		DISPLAY ("="*65)
+		DISPLAY ("Vaccine Code".center(14)+"|"+"Dosage Required".center(24)+"|"+"Interval Between Doses".center(24))
+		DISPLAY ("="*65)
+		DISPLAY ("AF".ljust(14)+"|"+"2".center(24)+"|"+"2 weeks (14 days)".center(24))
+		DISPLAY ("BV".ljust(14)+"|"+"2".center(24)+"|"+"3 weeks (21 days)".center(24))
+		DISPLAY ("DM".ljust(14)+"|"+"2".center(24)+"|"+"4 weeks (28 days)".center(24))
+		DISPLAY ("EC".ljust(14)+"|"+"1".center(24)+"|"+"-".center(24))
+		DISPLAY ("="*65)
+	ENDIF
+	DOWHILE (True)
+		DISPLAY ("Enter vaccine you wish to take: ")
+		READ vc
+		IF flg == 1 AND vc == AF OR BV OR CZ OR DM OR EC THEN
+			BREAK
+		ELIF flg == 2 AND vc == AF OR CZ OR DM THEN
+			BREAK
+		ELIF flg == 3 AND vc == AF OR BC OR DM OR EC THEN
+			BREAK
+		ELSE
+			DISPLAY ("Invalid choice")
+		ENDIF
+	ENDDO
+	DISPLAY ("Vaccine successfully register")
+	DOWHILE (True)
+		DISPLAY ("Enter vaccine centre you wish to go(VC1 or VC2): ")
+		READ vc_location
+		IF vc_location == VC1 OR VC2 THEN
+			DISPLAY ("Location successfully register")
+			BREAK
+		ELSE
+			DISPLAY ("Invalid input")
+		ENDIF
+		IF vc_location == VC1 THEN
+			p_id = gen_new_id("VCA")
+		ELIF vc_location == VC2 THEN
+			p_id = gen_new_id("VCB")
+		ENDIF
+	ENDDO
+	DISPLAY ("Patient ID: ",p_id)
+	DOWHILE (True)
+		DISPLAY ("Enter contact number: ")
+		TRY
+			READ int(p_number)
+			BREAK
+		EXCEPY
+			DISPLAY ("Invalid input")
+	ENDDO
+	DOWHILE (True)
+		DISPLAY ("Enter password for your account: ")
+		READ p_pass
+		DISPLAY ("Reenter your password: ")
+		READ p_pass2
+		IF p_pass == p_pass2 THEN
+			DISPLAY ("Password successfully register")
+			BREAK
+		ELSE
+			DISPLAY ("Password does not match first password")
+		ENDIF
+	ENDDO
+	v_stage = 0
+	APPEND (p_id, p_pass, name, age, p_number, vc_location, vc) TO rec
+	WRITE rec INTO patients.txt
+	APPEND (p_id, vc, v_stage) TO rec2
+	fh = OPEN("vaccination.txt", "a")
+	WRITE rec2 INTO vaccination.txt
+	ENDDO
+ENDDEFINE
+
+DEFINE gen_new_id(eid)
+	fh = OPEN("id.txt", "r")
+	rec = fh
+	IF eid == VCA THEN
+		ind = 0
+	ELIF eif = VCB
+		ind = 1
+	ENDIF
+	mylist = rec
+	nextid = mylist[ind]
+	IF LENGTH(newid) == 1 THEN
+		nextid = nextid[:3] + "0000" + newid
+	ELIF LENGTH(nextid) == 2 THEN
+		nextid = nextid[:3] + "000" + newid
+	ELIF LENGTH(nextid) == 3 THEN
+		nextid = nextid[:3] + "00" + newid
+	ELIF LENGTH(nextid) == 4 THEN
+		nextid = nextid[:3] + "0" + newid
+	ELIF LENGTH(nextid) == 5 THEN
+		nextid = nextid[:3] + newid
+	ENDIF
+	mylist[ind] = nextid
+	rec = mylist
+	fh = OPEN("id.txt", "w")
+	WRITE rec INTO id.txt
+	RETURN (newid)
+ENDDEFINE
+
+DEFINE Pmod_date(PID)
+	fh = OPEN("patient.txt", r")
+	DEFINE allrec
+	LOOP line IN fh
+		mylist = fh
+		APPEND mylist INTO allrec
+	ENDLOOP
+	DOWHILE
+		DISPLAY ("1 - Patient Name")
+		DISPLAY ("2 - Contact number")
+		DISPLAY ("3 - Exit")
+		READ choice
+		IF choice == 1 THEN
+			DISPLAY ("Current name: ", allrec[PID][2])
+			DOWHILE (True)
+				DISPLAY ("Enter new name: ")
+				READ new_name
+				IF LENGTH(new_name) == 0 THEN
+					DISPLAY ("Please input valid name.")
+				ELSE
+					BREAK
+				ENDIF
+			ENDDO
+			DOWHILE (True)
+				DISPLAY ("Current name: ", allrec[PID][2])
+				DISPLAY ("New name: ", new_name)
+				DISPLAY ("Comfirm (Y/N): ")
+				READ d_com
+				IF d_com == Y THEN
+					allrec[PID][2] = new_name
+					fh = OPEN("patient.txt", "W")
+					WRITE allrec INTO patient.txt
+					BREAK
+				ELIF d_com == N THEN
+					DISPLAY ("No change made")
+					BREAK
+				ELSE
+					DISPLAY ("Invalid input")
+				ENDIF
+			ENDDO
+		ELIF choice == 2 THEN
+			DOWHILE (True)
+				DISPLAY ("Current contact number: ", allrec[PID][4])
+				TRY
+					READ int(p_number)
+				EXCEPT
+					DISPLAY ("Invalid input")
+			ENDDO
+			DOWHILE (True)
+				DISPLAY ("Current contact number: ", allrec[PID][4])
+				DISPLAY ("New contact number: ", p_number)
+				DISPLAY ("Comfirm (Y/N): ")
+				READ d_com
+				IF d_com == Y/N THEN
+					allrec[PID][4] = str(p_number)
+					fh = OPEN("patient.txt", "w")
+					WRITE allrec INTO patient.txt
+					BREAK
+				ELIF d_com == N THEN
+					DISPLAY ("No change made")
+					BREAK
+				ELSE
+					DISPLAY ("Invalid input")
+				ENDIF
+			ENDDO
+		ELIF choice == 3 THEN
+			BREAK
+		ELSE
+			DISPLAY ("Invalid input")
+		ENDIF
+	ENDWHILE
+ENDDEFINE
+
+DEFINE vc_statusview()
+	fh = OPEN("vaccination.txt", "r")
+	DEFINE allrec
+	LOOP line IN fh
+		mylist = fh
+		APPEND mylist INTO allrec
+	ENDLOOP
+	no_of_rec = LENGTH(allrec)
+	DEFINE af, bv, cz, dm, ec, d0, d1, d2
+	LOOP i IN RANGE(no_of_rec)
+		IF allrec[i][1] == AF THEN
+			af = af + 1
+		ELIF allrec[i][1] == BV THEN
+			bv = bv + 1
+		ELIF allrec[i][1] == CZ THEN
+			cz = cz + 1
+		ELIF allrec[i][1] == DM THEN
+			dm = dm + 1
+		ELIF allrec[i][1] == EC THEN
+			ec = ec + 1
+		ENDIF
+		IF allrec[i][2] == 0 THEN
+			d0 = d0 + 1
+		ELIF allrec[i][2] == 1 THEN
+			d1 = d1 + 1
+		ELIF allrec[i][2] == 2 THEN
+			d2 = d2 + 1
+		ENDIF
+	ENDLOOP
+	DISPLAY ("Total number of patient: ", no_of_rec)
+	DISPLAY ("Total number of patient who haven't receive any dose: ", d0)
+	DISPLAY ("Total number of patient waiting for dose 2: ", d1)
+	DISPLAY ("Total number of patient who completed vaccination: ", d2)
+	DISPLAY ("Total number of patient choose AF: ", af)
+	DISPLAY ("Total number of patient choose BV: ", bv)
+	DISPLAY ("Total number of patient choose CZ: ", cz)
+	DISPLAY ("Total number of patient choose DM: ", dm)
+	DISPLAY ("Total number of patient choose EC: ", ec)
+ENDDEFINE
+
+DEFINE vc_admin()
+	IMPORT date, datetime, timedelta FROM datetime
+	fh = OPEN("patients.txt", "r")
+	DEFINE allrec
+	LOOP line IN fh
+		mylist = fh
+		APPEND mylist INTO allrec
+	ENDLOOP
+	fh2 = OPEN("vaccination.txt", "r")
+	DEFINE allrec2
+	LOOP line in fh2
+		mylist2 = fh2
+		APPEND mylist2 INTO allrec2
+	ENDLOOP
+	no_of_rec = LENGTH(allrec)
+	no_of_rec2 = LENGTH(allrec2)
+	DEFINE flg, flg2, flg3, flg4
+	DOWHILE (True)
+		DISPLAY ("Enter patient ID to search (Type exit to exit): ")
+		READ search
+		LOOP i IN RANGE(no_of_rec)
+			IF search == allrec[i][0] THEN
+			j = i
+			flg = 1
+		ENDLOOP
+		IF flg == 1 THEN
+			LOOP k IN RANGE(no_of_rec2)
+			IF search == allrec2[k][0]
+			l = k
+			ENDLOOP
+			DOWHILE (True)
+				DISPLAY ("Patient ID: ", allrec[j][0])
+				DISPLAY ("Name: ", allrec[j][2])
+				DISPLAY ("Age: ", allrec[j][3])
+				DISPLAY ("Vaccine centre choosen: ", allrec[j][5])
+				DISPLAY ("Vaccine choosen ", allrec[j][6])
+				TRY
+					DISPLAY ("Vaccine time: ",allrec2[l][3])
+				EXCEPT
+					DISPLAY ("Patient haven't been vaccine")
+				TRY
+					DISPLAY ("Dose1 date: ",allrec2[l][4])
+				EXCEPT
+					PASS
+				TRY
+					DISPLAY ("Dose2 date: ",allrec2[l][5])
+				EXCEPT
+					PASS
+				IF allrec2[l][1] == EC THEN
+					flg2 = 1
+				ENDIF
+				IF allrec2[l][2] == 0 THEN
+					DISPLAY ("Pending for dose")
+					flg4 = 1
+				ELIF allrec[l][2] == 1 THEN
+					DISPLAY ("Pending for second dose")
+				ELIF allrec[1][2] == 2 THEN
+					DISPLAY ("All dose complete!")
+					EXIT(Smenu())
+				ENDIF
+				DISPLAY ("1 - Sign up for vaccination")
+				DISPLAY ("2 - Exit")
+				DISPLAY ("Enter your choice: ")
+				READ choice
+				IF choice == 1 THEN
+					DISPLAY ("Dose complete?")
+					DOWHILE (True)
+						DISPLAY ("Y/N: ")
+						READ vc_status
+						IF vc_status == Y THEN
+							flg3 = 1
+							IF flg2 == 0 THEN
+								allrec2[l][2] = str(int(allrec2[l][2])+1)
+							ELIF flg2 == 1 THEN
+								allrec2[l][2] = str(2)
+							BREAK
+							ENDIF
+						ELIF vc_status == N THEN
+							DISPLAY ("No change is made")
+							flg3 = 0
+							BREAK
+						ELSE
+							DISPLAY ("Invalid input")
+						ENDIF
+					ENDDO
+					IF flg4 == 1 AND flg3 == 1 THEN
+						vc = allrec[j][6]
+						d_time = GET(now time FROM datetime)
+						d1_date = GET(now date FROM date)
+						IF vc == AF THEN
+							d2_date = d1_date + timedelta(days=14)
+						ELIF vc = BV OR CZ THEN
+							d2_date = d1_date + timedelta(days=21)
+						ELIF vc == DM THEN
+							d2_date = d1_date + timedelta(days=28)
+						ENDIF
+						TRY
+							APPEND d2_date INTO allrec2[l]
+						EXCEPT
+							PASS
+					ENDIF
+					fh2 = OPEN("vaccination.txt", "w")
+					LOOP line IN allrec2
+						WRITE line INTO vc vaccination.txt
+					ENDLOOP
+					DISPLAY ("Vaccine status had been update")
+					EXIT(Smenu())
+				ELIF choice == 2 THEN
+					EXIT(Smenu())
+				ELSE
+					DISPLAY ("Invalid choice")
+				ENDIF
+			ENDDO
+		ENDIF
+		IF search == exit THEN
+			EXIT(Smenu())
+		ELSE
+			DISPLAY ("Patient not found")
+		ENDIF
+	ENDDO
+ENDDEFINE
+
+DEFINE patient_login()
+	DEFINE allrec, allrec2
+	fh = OPEN("patients.txt", "r")
+	LOOP line IN fh
+		mylist = fh
+		APPEND mylist INTO allrec
+	ENDLOOP
+	fh = OPEN("vaccination.txt", "r")
+	LOOP line IN fh
+		mylist2 = fh
+		APPEND mylist2 INTO allrec2
+	ENDLOOP
+	no_of_user = LENGTH(allrec)
+	no_of_user2 = LENGTH(allrec2)
+	DOWHILE (True)
+		flg_valid = 0
+		DISPLAY ("Enter patient ID: ")
+		READ user
+		DISPLAY ("Enter password: ")
+		READ password
+		LOOP i IN RANGE(no_of_user)
+			IF user == allrec[i][0] AND password == allrec[i][1] THEN
+				flg_valid = 1
+				j = 1
+			ENDIF
+		ENDLOOP
+		IF flg_valid == 1 THEN
+			LOOP k IN RANGE(no_of_user2)
+				IF user == allrec2[k][0] THEN
+					l = k
+				ELSE
+					DISPLAY ("Patient not found in vaccination.txt.")
+					DISPLAY ("Please contact staff.")
+					EXIT(Pmain_menu())
+				ENDIF
+			ENDLOOP
+			DOWHILE (True)
+				DISPLAY ("1 - Modify data")
+				DISPLAY ("2 - View current status")
+				DISPLAY ("3 - Exit (To refresh current data)")
+				DISPLAY ("Enter your choice: ")
+				READ choice
+				IF choice == 1 THEN
+					CALL: Pmod_data(j)
+				ELIF chice == 2 THEN
+					DISPLAY ("Patient ID: ", allrec[j][0])
+					DISPLAY ("Name: ", allrec[j][2])
+					DISPLAY ("Vaccine centre choosen: ", allrec[j][5])
+					DISPLAY ("Vaccine choosen: ", allrec[j][6])
+					IF allrec2[l][2] == 0 THEN
+						DISPLAY ("Vaccine status: Pending for dose")
+					ELIF allrec2[l][2] == 1 THEN
+						DISPLAY ("Vaccine status: Dose 1 complete, pending for dose 2")
+					ELIF allrec2[l][2] == 2 THEN
+						DISPLAY ("Vaccine status: All dose complete.")
+					ENDIF
+					TRY
+						DISPLAY ("Vaccine time: ",allrec2[l][3])
+					EXCEPT
+						PASS
+					TRY
+						DISPLAY ("Dose1 date: ",allrec2[l][4])
+					EXCEPT
+						DISPLAY ("Patient haven't been vaccine")
+					TRY
+						DISPLAY ("Dose2 date: ",allrec2[l][5])
+					EXCEPT
+						PASS
+				ELIF chice == 3 THEN
+					EXIT(Pmain_menu())
+				ELSE
+					DISPLAY ("Invalid choice")
+				ENDIF
+		ELSE
+			DISPLAY ("Invalid user or password")
+			EXIT(Pmain_menu())
+		ENDIF
+	ENDDO
+ENDDEFINE
+
+DEFINE staff_login()
+	DEFINE allrec
+	fh = OPEN("staff.txt", "r")
+	LOOP line IN fh
+		mylist = fh
+		APPEND mylist INTO allrec
+	ENDLOOP
+	no_of_user = LENGTH(allrec)
+	DOWHILE (True)
+		flg_valid = 0
+		DISPLAY ("Enter username: ")
+		READ user
+		DISPLAY ("Enter password: ")
+		READ password
+		LOOP i IN RANGE(no_of_user)
+			IF user == allrec[i][1] AND password == allrec[i][2] THEN
+				flg_valid = 1
+			ENDIF
+		ENDLOOP
+		IF flg_valid == 1 THEN
+			DISPLAY ("Login successful")
+			CAll: Smenu()
+		ELSE
+			DISPLAY ("Invalid user or password")
+			EXIT(Pmain_menu())
+ENDDEFINE
+
+BEGIN
+	CALL: Pmain_menu()
+END
